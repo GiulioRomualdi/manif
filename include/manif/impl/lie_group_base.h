@@ -5,6 +5,7 @@
 #include "manif/impl/traits.h"
 #include "manif/impl/eigen.h"
 #include "manif/impl/tangent_base.h"
+#include "manif/impl/assignment_assert.h"
 
 #include "manif/constants.h"
 
@@ -40,6 +41,65 @@ public:
 
   //! @brief Helper for skipping an optional parameter.
   static const OptJacobianRef _;
+
+protected:
+
+  MANIF_DEFAULT_CONSTRUCTOR(LieGroupBase)
+
+public:
+
+  /**
+   * @brief Assignment operator.
+   * @param[in] An element of the Lie group.
+   * @return A reference to this.
+   * @note This is a special case of the templated operator=. Its purpose is to
+   * prevent a default operator= from hiding the templated operator=.
+   */
+  _Derived& operator =(const LieGroupBase& m);
+
+  /**
+   * @brief Assignment operator.
+   * @param[in] An element of the Lie group.
+   * @return A reference to this.
+   */
+  template <typename _DerivedOther>
+  _Derived& operator =(const LieGroupBase<_DerivedOther>& m);
+
+  /**
+   * @brief Assignment operator given Eigen object.
+   * @param[in] An element of the Lie group.
+   * @return A reference to this.
+   */
+  template <typename _EigenDerived>
+  _Derived& operator =(const Eigen::MatrixBase<_EigenDerived>& data);
+
+#if 0
+  /**
+   * @brief Move operator.
+   * @param[in] An element of the Lie group.
+   * @return A reference to this.
+   * @note This is a special case of the templated operator=. Its purpose is to
+   * prevent a default operator= from hiding the templated operator=.
+   */
+  _Derived& operator =(LieGroupBase&& m);
+
+  /**
+   * @brief Move operator.
+   * @param[in] An element of the Lie group.
+   * @return A reference to this.
+   */
+  template <typename _DerivedOther>
+  _Derived& operator =(LieGroupBase<_DerivedOther>&& m);
+
+  /**
+   * @brief Move operator given Eigen object.
+   * @param[in] An Eigen object.
+   * @return A reference to this.
+   */
+  template <typename _EigenDerived>
+  _Derived& operator =(Eigen::MatrixBase<_EigenDerived>&& data);
+
+#endif
 
   //! @brief Access the underlying data by const reference
   DataType& coeffs();
@@ -235,21 +295,6 @@ public:
   // Some operators
 
   /**
-   * @brief Assignment operator.
-   * @param[in] An element of the Lie group.
-   * @return A reference to this.
-   */
-  _Derived& operator =(const LieGroupBase<_Derived>& m);
-
-  /**
-   * @brief Assignment operator.
-   * @param[in] An element of the Lie group.
-   * @return A reference to this.
-   */
-  template <typename _DerivedOther>
-  _Derived& operator =(const LieGroupBase<_DerivedOther>& m);
-
-  /**
    * @brief Equality operator.
    * @param[in] An element of the same Lie group.
    * @return true if the Lie group element m is 'close' to this,
@@ -301,10 +346,11 @@ public:
   //! Static helper to create a random object of the Lie group.
   static LieGroup Random();
 
-private:
+protected:
 
-  _Derived& derived() { return *static_cast< _Derived* >(this); }
-  const _Derived& derived() const { return *static_cast< const _Derived* >(this); }
+  inline _Derived& derived() & noexcept { return *static_cast< _Derived* >(this); }
+  inline const _Derived& derived() const & noexcept { return *static_cast< const _Derived* >(this); }
+  inline _Derived&& derived() && noexcept { return std::move(*static_cast< _Derived* >(this)); }
 };
 
 template <typename _Derived>
@@ -317,6 +363,74 @@ constexpr int LieGroupBase<_Derived>::RepSize;
 template <typename _Derived>
 const typename LieGroupBase<_Derived>::OptJacobianRef
 LieGroupBase<_Derived>::_ = {};
+
+// Copy
+
+template <typename _Derived>
+_Derived&
+LieGroupBase<_Derived>::operator =(const LieGroupBase& m)
+{
+  derived().coeffs() = m.coeffs();
+  return derived();
+}
+
+template <typename _Derived>
+template <typename _DerivedOther>
+_Derived&
+LieGroupBase<_Derived>::operator =(const LieGroupBase<_DerivedOther>& m)
+{
+  derived().coeffs() = m.coeffs();
+  return derived();
+}
+
+template <typename _Derived>
+template <typename _EigenDerived>
+_Derived&
+LieGroupBase<_Derived>::operator =(const Eigen::MatrixBase<_EigenDerived>& data)
+{
+  internal::AssignmentEvaluator<
+      typename internal::traits<_Derived>::Base>().run(data);
+
+  derived().coeffs() = data;
+  return derived();
+}
+
+// Move
+#if 0
+
+template <typename _Derived>
+_Derived&
+LieGroupBase<_Derived>::operator =(LieGroupBase&& m)
+{
+  derived().coeffs() = std::move(m).coeffs();
+  return derived();
+}
+
+template <typename _Derived>
+template <typename _DerivedOther>
+_Derived&
+LieGroupBase<_Derived>::operator =(
+    LieGroupBase<_DerivedOther>&& m)
+{
+  derived().coeffs() = std::move(m).coeffs();
+  return derived();
+}
+
+template <typename _Derived>
+template <typename _EigenDerived>
+_Derived&
+LieGroupBase<_Derived>::operator =(
+    Eigen::MatrixBase<_EigenDerived>&& data)
+{
+  internal::AssignmentEvaluator<
+      typename internal::traits<_Derived>::Base>(
+        data).run();
+
+  derived().coeffs() = std::move(data);
+  return derived();
+}
+
+#endif
 
 template <typename _Derived>
 typename LieGroupBase<_Derived>::DataType&
@@ -562,25 +676,6 @@ LieGroupBase<_Derived>::act(const Vector& v,
 }
 
 // Operators
-
-template <typename _Derived>
-_Derived&
-LieGroupBase<_Derived>::operator =(
-    const LieGroupBase<_Derived>& m)
-{
-  derived().coeffs() = m.coeffs();
-  return derived();
-}
-
-template <typename _Derived>
-template <typename _DerivedOther>
-_Derived&
-LieGroupBase<_Derived>::operator =(
-    const LieGroupBase<_DerivedOther>& m)
-{
-  derived().coeffs() = m.coeffs();
-  return derived();
-}
 
 template <typename _Derived>
 template <typename _DerivedOther>

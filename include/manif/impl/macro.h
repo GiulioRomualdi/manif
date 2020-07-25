@@ -116,6 +116,121 @@ raise(Args&&... args)
 #define MANIF_MAKE_ALIGNED_OPERATOR_NEW_COND_TYPE(X) \
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF((Eigen::internal::traits<typename X::DataType>::Alignment>0))
 
+#if 0
+  #define MANIF_DEFAULT_CONSTRUCTOR(X)  \
+    X() = default;                      \
+    ~X() = default;                     \
+    X(const X&) = default;              \
+    X(X&&) = default;
+#else
+  #define MANIF_DEFAULT_CONSTRUCTOR(X)  \
+    X() = default;                      \
+    ~X() = default;                     \
+    X(const X&) = default;
+#endif
+
+#define MANIF_GROUP_ML_ASSIGN_OP(X) \
+  _Derived& operator =(const X& o) { coeffs() = o.coeffs(); return derived(); }\
+  template <typename _DerivedOther>\
+  _Derived& operator =(const LieGroupBase<_DerivedOther>& o) { coeffs() = o.coeffs(); return derived(); }\
+  template <typename _EigenDerived>\
+  _Derived& operator =(const Eigen::MatrixBase<_EigenDerived>& o) { coeffs() = o; return derived(); }
+
+#define MANIF_GROUP_ASSIGN_OP(X) \
+  X& operator=(const X& o) { coeffs() = o.coeffs(); return derived(); }\
+  template <typename _DerivedOther>\
+  X& operator =(const X##Base<_DerivedOther>& o) { coeffs() = o.coeffs(); return derived(); }\
+  template <typename _DerivedOther>\
+  X& operator =(const LieGroupBase<_DerivedOther>& o) { coeffs() = o.coeffs(); return derived(); }\
+  template <typename _EigenDerived>\
+  X& operator =(const Eigen::MatrixBase<_EigenDerived>& o) { coeffs() = o; return derived(); }
+
+#define MANIF_GROUP_MAP_ASSIGN_OP(X) \
+  Map& operator=(const Map& o) { coeffs() = o.coeffs(); return *this; }\
+  template <typename _DerivedOther>\
+  Map& operator =(const manif::X##Base<_DerivedOther>& o) { coeffs() = o.coeffs(); return *this; }\
+  template <typename _DerivedOther>\
+  Map& operator =(const manif::LieGroupBase<_DerivedOther>& o) { coeffs() = o.coeffs(); return *this; }\
+  template <typename _EigenDerived>\
+  Map& operator =(const Eigen::MatrixBase<_EigenDerived>& o) { coeffs() = o; return *this; }
+
+#define MANIF_TANGENT_ML_ASSIGN_OP(X) \
+  _Derived& operator=(const X& o) { coeffs() = o.coeffs(); return derived(); }\
+  template <typename _DerivedOther>\
+  _Derived& operator =(const TangentBase<_DerivedOther>& o) { coeffs() = o.coeffs(); return derived(); }\
+  template <typename _EigenDerived>\
+  _Derived& operator =(const Eigen::MatrixBase<_EigenDerived>& o) { coeffs() = o; return derived(); }
+
+#define MANIF_TANGENT_ASSIGN_OP(X) \
+  X& operator=(const X& o) { coeffs() = o.coeffs(); return derived(); }\
+  template <typename _DerivedOther>\
+  X& operator =(const X##Base<_DerivedOther>& o) { coeffs() = o.coeffs(); return derived(); }\
+  template <typename _DerivedOther>\
+  X& operator =(const TangentBase<_DerivedOther>& o) { coeffs() = o.coeffs(); return derived(); }\
+  template <typename _EigenDerived>\
+  X& operator =(const Eigen::MatrixBase<_EigenDerived>& o) { coeffs() = o; return derived(); }
+
+#define MANIF_TANGENT_MAP_ASSIGN_OP(X) \
+  Map& operator=(const Map& o) { coeffs() = o.coeffs(); return *this; }\
+  template <typename _DerivedOther>\
+  Map& operator =(const manif::X##Base<_DerivedOther>& o) { coeffs() = o.coeffs(); return *this; }\
+  template <typename _DerivedOther>\
+  Map& operator =(const manif::TangentBase<_DerivedOther>& o) { coeffs() = o.coeffs(); return *this; }\
+  template <typename _EigenDerived>\
+  Map& operator =(const Eigen::MatrixBase<_EigenDerived>& o) { coeffs() = o; return *this; }
+
+/**
+ * @brief Automatically define:
+ * - copy constructor
+ * - copy constructor given Base object
+ * - copy constructor given Eigen object
+ */
+#define MANIF_COPY_CONSTRUCTOR(X)                                                           \
+  X(const X& o) : Base(), data_(o.coeffs()) { }                                             \
+  X(const Base& o) : Base(), data_(o.coeffs()) { }                                          \
+  template <typename D> X(const Eigen::MatrixBase<D>& o) : Base(), data_(o)                 \
+    { manif::internal::AssignmentEvaluator<Base>().run(o); }
+
+#if 0
+
+  /**
+   * @brief Automatically define:
+   * - move constructor/assignment
+   * - move constructor/assignment given different Derived
+   * - move constructor/assignment given Base object
+   * - move constructor/assignment given Eigen object
+   */
+
+  #define MANIF_MOVE_CONSTRUCTOR(X)                                                                 \
+    X(X&& o) : Base() { this->operator =(std::move(o)); }                                           \
+    template <typename... O> X(X<O...>&& o) : Base() { this->operator =(std::move(o)); }            \
+    X(Base&& o) : Base() { this->operator =(std::move(o)); }                                        \
+    template <typename D> X(Eigen::MatrixBase<D>&& o) : Base() { this->operator =(std::move(o)); }
+
+  #define MANIF_MOVE_ASSIGNMENT(X)                                                    \
+    typename X& operator=(X&& o) { coeffs() = std::move(o).coeffs(); return *this; }
+
+  #define MANIF_MOVE_FUNCTIONS(X) \
+    MANIF_MOVE_CONSTRUCTOR(X)     \
+    MANIF_MOVE_ASSIGNMENT(X)
+
+#else
+  #define MANIF_MOVE_CONSTRUCTOR(X)
+  #define MANIF_MOVE_ASSIGNMENT(X)
+  #define MANIF_MOVE_FUNCTIONS(X)
+#endif
+
+#if 0
+  #define MANIF_COEFFS_FUNCTIONS()                      \
+    DataType& coeffs() & { return data_; }              \
+    const DataType& coeffs() const & { return data_; }  \
+    DataType&& coeffs() && { return std::move(data_); }
+#else
+  #define MANIF_COEFFS_FUNCTIONS()                      \
+    DataType& coeffs() & { return data_; }              \
+    const DataType& coeffs() const & { return data_; }
+#endif
+
 // LieGroup - related macros
 
 #define MANIF_INHERIT_GROUP_AUTO_API    \
