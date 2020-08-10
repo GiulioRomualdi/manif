@@ -122,14 +122,24 @@ public:
   Rotation rotation() const;
 
   /**
+   * @brief Get the rotational part of this as a quaternion (const version).
+   */
+  Eigen::Map<const QuaternionDataType> quat() const;
+
+  /**
    * @brief Get the rotational part of this as a quaternion.
    */
-  QuaternionDataType quat() const;
+  Eigen::Map<QuaternionDataType> quat();
+
+  /**
+   * @brief Get the translational part in vector form (const version).
+   */
+  Eigen::Map<const Translation> translation() const;
 
   /**
    * @brief Get the translational part in vector form.
    */
-  Translation translation() const;
+  Eigen::Map<Translation> translation();
 
   /**
    * @brief Get the x component of the translational part.
@@ -193,17 +203,31 @@ SE3Base<_Derived>::rotation() const
 }
 
 template <typename _Derived>
-typename SE3Base<_Derived>::QuaternionDataType
+Eigen::Map<const typename SE3Base<_Derived>::QuaternionDataType>
 SE3Base<_Derived>::quat() const
 {
   return asSO3().quat();
 }
 
 template <typename _Derived>
-typename SE3Base<_Derived>::Translation
+Eigen::Map<typename SE3Base<_Derived>::QuaternionDataType>
+SE3Base<_Derived>::quat()
+{
+  return asSO3().quat();
+}
+
+template <typename _Derived>
+Eigen::Map<const typename SE3Base<_Derived>::Translation>
 SE3Base<_Derived>::translation() const
 {
-  return coeffs().template head<3>();
+  return Eigen::Map<const typename SE3Base<_Derived>::Translation>(coeffs().template head<3>().data());
+}
+
+template <typename _Derived>
+Eigen::Map<typename SE3Base<_Derived>::Translation>
+SE3Base<_Derived>::translation()
+{
+  return Eigen::Map<typename SE3Base<_Derived>::Translation>(coeffs().template head<3>().data());
 }
 
 template <typename _Derived>
