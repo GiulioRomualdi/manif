@@ -117,8 +117,11 @@ public:
   //! @brief Get the w component of the quaternion.
   Scalar w() const;
 
+  //! @brief Get quaternion. (Const version)
+  Eigen::Map<const QuaternionDataType> quat() const;
+
   //! @brief Get quaternion.
-  QuaternionDataType quat() const;
+  Eigen::Map<QuaternionDataType> quat();
 
   /**
    * @brief Normalize the underlying quaternion.
@@ -334,10 +337,17 @@ SO3Base<_Derived>::w() const
 }
 
 template <typename _Derived>
-typename SO3Base<_Derived>::QuaternionDataType
+Eigen::Map<const typename SO3Base<_Derived>::QuaternionDataType>
 SO3Base<_Derived>::quat() const
 {
-  return QuaternionDataType(coeffs());
+  return Eigen::Map<const typename SO3Base<_Derived>::QuaternionDataType>(coeffs().data());
+}
+
+template <typename _Derived>
+Eigen::Map<typename SO3Base<_Derived>::QuaternionDataType>
+SO3Base<_Derived>::quat()
+{
+  return Eigen::Map<typename SO3Base<_Derived>::QuaternionDataType>(coeffs().data());
 }
 
 template <typename _Derived>
