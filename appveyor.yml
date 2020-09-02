@@ -51,7 +51,7 @@ install:
       }
 
   # Get Eigen 3.3-beta1
-  - ps: wget -O eigen3.zip http://bitbucket.org/eigen/eigen/get/3.3-beta1.zip
+  - ps: wget -O eigen3.zip https://gitlab.com/libeigen/eigen/-/archive/3.3.1/eigen-3.3.1.zip
   - cmd: 7z x eigen3.zip -o"C:\projects" -y > nul
   # - cmd: $env:CMAKE_INCLUDE_PATH = "C:\projects\eigen-eigen-ce5a455b34c0;$env:CMAKE_INCLUDE_PATH"
 
